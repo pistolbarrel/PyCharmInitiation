@@ -39,10 +39,10 @@ def drawPrincipleOnlyBar(principle, win):
 
 
 def drawYearlyGainBars(apr, principle, win):
-    for year in range(1, 11):
-        principle = principle * (1 + apr)
+    for year in range(1,11):
+        principle = principle * (1+apr)
         print(principle)
-        bar = Rectangle(Point(year, 0), Point(year + 1, principle))
+        bar = Rectangle(Point(year,0), Point(year + 1,principle))
         bar.setFill("green")
         bar.setWidth(2)
         bar.draw(win)
