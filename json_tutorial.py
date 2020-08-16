@@ -100,6 +100,10 @@ def is_complex(objct):
         return complex(objct['real'], objct['img'])
     return objct
 
+######################################################################
+# this is my super duper comment explaining below
+######################################################################
+
 
 def example_8():
     complex_object = json.loads('{"__complex__": true, "real": 4, "img": 5}', object_hook=is_complex)
@@ -125,7 +129,7 @@ def example_11():
     # get JSON string data from CityBike NYC using web requests library
     json_response = requests.get("https://feeds.citibikenyc.com/stations/stations.json")
     # check type of json_response object
-    print(type(json_response.text))
+    print(json_response.text)
     # load data in loads() function of json library
     bike_dict = json.loads(json_response.text)
     # check type of news_dict
@@ -159,4 +163,3 @@ def example_13():
     print(type(infinite))
 
 
-example_11()
