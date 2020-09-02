@@ -14,35 +14,75 @@ def extract_title_length(table):
 def extract_info(table):
     info = []
     for item in table.findAll('div', attrs={'class': 'site-font-secondary-color'}):
-        for str in item.stripped_strings:
-            info.append(str)
+        for string in item.stripped_strings:
+            info.append(string)
     return info
-    a=42
+
+
+class MovieParse:
+    def __init__(self, url):
+        url = url
+        r = requests.get(url)
+        soup = BeautifulSoup(r.content, 'html5lib')
+        self.table = soup.find('div', attrs={'class': 'column small-16 medium-8 large-10'})
+
+    def print_info(self, supplied_length=None):
+        diryrcnty, stars, descr, director, year = '', '', '', '', ''
+        title, length = extract_title_length(self.table)
+        info = extract_info(self.table)
+        if len(info) == 4:
+            diryrcnty, stars, descr, ex_descr = info
+            director, year, country = diryrcnty.split('•')
+            director = director.replace("Directed by ", "")
+            stars = stars.replace("Starring ", "")
+            stars = stars.replace(',', ';')
+            descr = descr + '\n\n' + ex_descr
+        if len(info) == 3:
+            diryrcnty, stars, descr = info
+            splits = diryrcnty.split('•')
+            if len(splits) == 3:
+                director, year, country = splits
+            if len(splits) == 2:
+                year, country = splits
+            if director:
+                director = director.replace("Directed by ", "")
+            stars = stars.replace("Starring ", "")
+            stars = stars.replace(',', ';')
+
+        if len(info) == 2:
+            diryrcnty, descr = info
+            if '•' in diryrcnty:
+                splits = diryrcnty.split('•')
+                if len(splits) == 3:
+                    director, year, country = splits
+                if len(splits) == 2:
+                    year, country = splits
+                if director:
+                    director = director.replace("Directed by ", "")
+            else:
+                descr = diryrcnty + '\n\n' + descr
+
+        if year:
+            title = title + " (" + year.strip() + ")"
+
+        a = 42
+        if not supplied_length:
+            length = length.split('•')[1].strip()
+            print(length)
+        print(title)
+        if director:
+            print(director)
+        if stars:
+            print(stars)
+        if descr:
+            print()
+            print(descr)
+
 
 def main():
-    url = 'https://www.criterionchannel.com/videos/kramer-vs-kramer'
-    r = requests.get(url)
-    soup = BeautifulSoup(r.content, 'html5lib')
-    # print(soup.prettify())
-    table = soup.find('div', attrs={'class': 'column small-16 medium-8 large-10'})
-
-    title, length = extract_title_length(table)
-    one, two, three = extract_info(table)
-    director, year, country = one.split('•')
-    director = director.replace("Directed by ", "")
-    title = title + " (" + year.strip() + ")"
-    two = two.replace("Starring ", "")
-    two = two.replace(',', ';')
-
-
-    a = 42
-    print(length)
-    print(title)
-    print(director)
-    print(two)
-    print()
-    print(three)
-
+    url = 'https://www.criterionchannel.com/a-master-builder/videos/a-master-builder'
+    movie_parser = MovieParse(url)
+    movie_parser.print_info()
 
 
 if __name__ == "__main__":

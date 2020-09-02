@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from dateutil.parser import parse
 import argparse
 import os
-
+import sys
 
 def extract_description(soup):
     GDtable = soup.find('div', attrs={'class': 'node__content'})
@@ -17,28 +17,27 @@ def extract_item(soup, field_name):
         return item.text
 
 
-def date_to_ddmmyy(date_str, delim):
-    dt = parse(date_str)
-    return dt.strftime('%m' + delim + '%d' + delim + '%y')
+def convertDateToDDMMYY(dateStr, delim):
+    dt = parse(dateStr)
+    return dt.strftime('%m'+delim+'%d'+delim+'%y')
 
 
-def date_to_ddmmyyyy(date_str, delim):
-    # will leave out left zero in month and day
-    dt = parse(date_str)
-    return dt.strftime('%#m' + delim + '%#d' + delim + '%Y')
+def convertDateToDDMMYYYY(dateStr, delim):
+    dt = parse(dateStr)
+    return dt.strftime('%#m'+delim+'%#d'+delim+'%Y')
 
 
-def date_to_yyyyddmm(date_str, delim):
-    dt = parse(date_str)
-    return dt.strftime('%Y' + delim + '%m' + delim + '%d')
+def convertDateToYYYYDDMM(dateStr, delim):
+    dt = parse(dateStr)
+    return dt.strftime('%Y'+delim+'%m'+delim+'%d')
 
 
-def date_range_to_start_date(date):
+def mungeDate(date):
     parts = date.split('-')
     return parts[0] + ',' + parts[1][-5:]
 
 
-def filename_from_url(url):
+def filenamefromurl(url):
     parts = url.split('/')
     return parts[-1]
 
@@ -52,26 +51,28 @@ def download(source, target):
 
 
 def main():
-    usageDesc = "This is how you use this thing"
-    parser = argparse.ArgumentParser(description=usageDesc)
-    parser.add_argument("url", help="URL to parse")
-    parser.add_argument("-n", "--no_download", help="Skip the download", action='store_false')
-    args = parser.parse_args()
-    if args.url:
-        url = args.url
+    # usageDesc = "This is how you use this thing"
+    # parser = argparse.ArgumentParser(description=usageDesc)
+    # parser.add_argument("-u", "--url", help="URL to parse")
+    # parser.add_argument("-n", "--no_download", help="Skip the download")
+    # args = parser.parse_args()
+    # if args.url:
+    #     url = args.url
+    url = 'https://www.dead.net/features/tapers-section/march-26-april-1-2007'
     r = requests.get(url)
     soup = BeautifulSoup(r.content, 'html5lib')
+    print(soup.prettify())
 
     info = {}
     info['desc'] = extract_description(soup)
     info['date'] = extract_item(soup, 'field--name-field-jam-date')
-    info['date_simple'] = date_to_ddmmyy(info['date'], '/')
+    info['date_simple'] = convertDateToDDMMYY(info['date'], '/')
     info['city'] = extract_item(soup, 'field--name-field-jam-location')
     info['venue'] = extract_item(soup, 'field--name-field-jam-venue')
     info['url'] = extract_item(soup, 'field--name-field-streamos-mp3-url')
     info['feat_date'] = extract_item(soup, 'field--name-field-homepage-feature-title')
-    info['feat_date_simple'] = date_to_ddmmyyyy(date_range_to_start_date(info['feat_date']), '/')
-    info['feat_date_complex'] = date_to_yyyyddmm(date_range_to_start_date(info['feat_date']), '-')
+    info['feat_date_simple'] = convertDateToDDMMYYYY(mungeDate(info['feat_date']), '/')
+    info['feat_date_complex'] = convertDateToYYYYDDMM(mungeDate(info['feat_date']), '-')
 
     print(info['date_simple']+' '+info['venue']+' in '+info['city'])
     print('Grateful Dead')
@@ -85,10 +86,10 @@ def main():
 
     print(info['url'])
 
-    if args.no_download:
+    if not args.no_download:
         print('Downloading mp3 to:')
-        print(os.getcwd() + '\\' + filename_from_url(info['url']))
-        download(info['url'], filename_from_url(info['url']))
+        print(os.getcwd()+'\\'+filenamefromurl(info['url']))
+        download(info['url'], filenamefromurl(info['url']))
 
     print('DONE')
 
