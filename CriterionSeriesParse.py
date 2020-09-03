@@ -1,10 +1,16 @@
 import requests
 from bs4 import BeautifulSoup
 import CriterionMovieParse
+import argparse
 
 
 def main():
-    url = 'https://www.criterionchannel.com/two-by-dorothy-arzner'
+    usage_desc = "This is how you use this thing"
+    parser = argparse.ArgumentParser(description=usage_desc)
+    parser.add_argument("url", help="URL to parse")
+    args = parser.parse_args()
+    if args.url:
+        url = args.url
     series_name, eps, descr, series = get_series_info(url)
     series_name = "Criterion:" + series_name
     print('++++++++++++++++++++++++++++++++++++++++++++++++++++++')

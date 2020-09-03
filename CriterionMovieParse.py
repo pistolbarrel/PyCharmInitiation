@@ -1,9 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from dateutil.parser import parse
 import argparse
-import os
-import sys
 
 
 def extract_title_length(table):
@@ -80,7 +77,13 @@ class MovieParse:
 
 
 def main():
-    url = 'https://www.criterionchannel.com/a-master-builder/videos/a-master-builder'
+    usage_desc = "This is how you use this thing"
+    parser = argparse.ArgumentParser(description=usage_desc)
+    parser.add_argument("url", help="URL to parse")
+    args = parser.parse_args()
+    if args.url:
+        url = args.url
+    r = requests.get(url)
     movie_parser = MovieParse(url)
     movie_parser.print_info()
 
