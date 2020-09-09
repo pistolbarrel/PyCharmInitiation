@@ -8,14 +8,14 @@ def main():
     args = process_args()
     if args.url:
         url = args.url
-        series_name, description, extracted_episode_info = get_series_info(url)
-        series_name = "Criterion:" + series_name
-        print('++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-        print(series_name)
-        print(description)
-        print('++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-        print()
-        print()
+        extracted_episode_info = get_series_info(url)
+        # series_name = "Criterion:" + series_name
+        # print('++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        # print(series_name)
+        # print(description)
+        # print('++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        # print()
+        # print()
         i = 0
         for movie in extracted_episode_info:
             i += 1
@@ -24,7 +24,7 @@ def main():
             print('++++++++++++++++++++++++++++++++++++++++++++++++++++++')
             print(i)
             print(time)
-            print(series_name)
+            # print(series_name)
             movie_parser.print_info(time)
             print('++++++++++++++++++++++++++++++++++++++++++++++++++++++')
             print()
@@ -44,9 +44,9 @@ def process_args():
 def get_series_info(url):
     r = requests.get(url)
     soup = BeautifulSoup(r.content, 'html5lib')
-    series_name, description = extract_series_name_and_description(soup)
-    series = extract_episode_time_and_url(soup)
-    return series_name, description, series
+    series = extract_series_title_feature(soup)
+    series += extract_episode_time_and_url(soup)
+    return series
 
 
 def extract_series_name_and_description(soup):
@@ -54,16 +54,28 @@ def extract_series_name_and_description(soup):
     table = soup.find('div', attrs={'class': 'collection-details grid-padding-left'})
     for string in table.stripped_strings:
         ret_str.append(string)
+    if len(ret_str) == 6:
+        #     this is a mini series
+        pass
     return ret_str[0], ret_str[2]
 
 
+def extract_series_title_feature(soup):
+    ret = []
+    table = soup.find('li', attrs={'class': 'js-collection-item'})
+    for item in table.findAll('div', attrs={'class': 'grid-item-padding'}):
+        movie = [item.a.text.strip(), item.a['href']]
+        ret.append(movie)
+    return ret
+
+
 def extract_episode_time_and_url(soup):
-    series = []
+    ret = []
     table = soup.find('ul', attrs={'class': 'js-load-more-items-container'})
     for item in table.findAll('div', attrs={'class': 'grid-item-padding'}):
         movie = [item.a.text.strip(), item.a['href']]
-        series.append(movie)
-    return series
+        ret.append(movie)
+    return ret
 
 
 if __name__ == "__main__":

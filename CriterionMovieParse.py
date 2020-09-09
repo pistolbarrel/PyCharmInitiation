@@ -58,6 +58,8 @@ class MovieParse:
                     director = director.replace("Directed by ", "")
             else:
                 descr = diryrcnty + '\n\n' + descr
+        if len(info) == 1:
+            descr = info[0]
 
         if year:
             title = title + " (" + year.strip() + ")"
@@ -85,7 +87,11 @@ def main():
         url = args.url
     r = requests.get(url)
     movie_parser = MovieParse(url)
+    print('='*54)
     movie_parser.print_info()
+    print('='*54)
+    print()
+    print()
 
 
 if __name__ == "__main__":
