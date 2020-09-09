@@ -9,7 +9,7 @@ def main():
     comp_number = ''
     letter_count = 0
     number_count = 0
-    with open("serviceCallIp.txt", 'r') as f:
+    with open("DataFiles/ServiceCallIP.txt", 'r') as f:
         lines = f.readlines()
     for line in lines:
         letter, number = line.split()
@@ -44,7 +44,7 @@ def main():
     print(comp_letter + " " + comp_number + " ", number_count)
     print(comp_letter + " ", letter_count)
 
-    with open("serviceCallIp.txt", 'r') as f:
+    with open("DataFiles/ServiceCallIP.txt", 'r') as f:
         ln = f.readline()
         one, two = ln.split()
         a = 42
