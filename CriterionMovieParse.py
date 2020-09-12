@@ -66,7 +66,8 @@ class MovieParse:
 
         a = 42
         if not supplied_length:
-            length = length.split('•')[1].strip()
+            if '•' in length:
+                length = length.split('•')[1].strip()
             print(length)
         print(title)
         if director:
