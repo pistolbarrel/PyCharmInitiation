@@ -10,6 +10,7 @@ def main():
         url = args.url
         series_name, description, extracted_episode_info = get_series_info(url)
         series_name = "Criterion:" + series_name
+        print('Examined ' + url)
         print('++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         print(series_name)
         print(description)
@@ -44,17 +45,33 @@ def process_args():
 def get_series_info(url):
     r = requests.get(url)
     soup = BeautifulSoup(r.content, 'html5lib')
+    next_url = extract_next_url(soup)
     series_name, description = extract_series_name_and_description(soup)
     series = extract_episode_time_and_url(soup)
+    while next_url:
+        r = requests.get(next_url)
+        soup = BeautifulSoup(r.content, 'html5lib')
+        next_url = extract_next_url(soup)
+        series += extract_episode_time_and_url(soup)
     return series_name, description, series
 
 
 def extract_series_name_and_description(soup):
-    ret_str = []
+    ret_str = ["NoName", "unused", "NoDescription"]
     table = soup.find('div', attrs={'class': 'collection-details grid-padding-left'})
-    for string in table.stripped_strings:
-        ret_str.append(string)
+    if table:
+        for string in table.stripped_strings:
+            ret_str.append(string)
     return ret_str[0], ret_str[2]
+
+
+def extract_next_url(soup):
+    ret_str = None
+    table = soup.find('div', attrs={'class': 'row loadmore'})
+    if table:
+        for item in table.findAll('a', attrs={'class': 'js-load-more-link'}):
+            ret_str = "https://www.criterionchannel.com" + item['href']
+    return ret_str
 
 
 def extract_episode_time_and_url(soup):

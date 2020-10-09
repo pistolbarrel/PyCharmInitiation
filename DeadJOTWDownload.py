@@ -13,7 +13,17 @@ def extract_description(soup):
 
 def extract_item(soup, field_name):
     gDJamtable = soup.find('div', attrs={'class': field_name})
+    if field_name is 'field--name-field-homepage-feature-title' and gDJamtable is None:
+        gDJamtable = soup.find('div', attrs={'class': 'views-field views-field-nothing-3'})
+        for item in gDJamtable.findAll("div", attrs={'class': 'custom-title'}):
+            return item.text
     for item in gDJamtable.findAll("div", attrs={'class': 'field__item'}):
+        return item.text
+
+
+def extract_feature_date(soup, field_name):
+    gDJamtable = soup.find('div', attrs={'class': field_name})
+    for item in gDJamtable.findAll("div", attrs={'class': 'custom-title'}):
         return item.text
 
 

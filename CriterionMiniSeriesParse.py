@@ -72,9 +72,10 @@ def extract_series_title_feature(soup):
 def extract_episode_time_and_url(soup):
     ret = []
     table = soup.find('ul', attrs={'class': 'js-load-more-items-container'})
-    for item in table.findAll('div', attrs={'class': 'grid-item-padding'}):
-        movie = [item.a.text.strip(), item.a['href']]
-        ret.append(movie)
+    if table:
+        for item in table.findAll('div', attrs={'class': 'grid-item-padding'}):
+            movie = [item.a.text.strip(), item.a['href']]
+            ret.append(movie)
     return ret
 
 
