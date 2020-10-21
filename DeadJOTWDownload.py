@@ -12,9 +12,14 @@ def extract_description(soup):
 
 
 def extract_item(soup, field_name):
+    print(soup.prettify())
     gDJamtable = soup.find('div', attrs={'class': field_name})
-    if field_name is 'field--name-field-homepage-feature-title' and gDJamtable is None:
+    if field_name == 'field--name-field-homepage-feature-title' and gDJamtable is None:
         gDJamtable = soup.find('div', attrs={'class': 'views-field views-field-nothing-3'})
+        for item in gDJamtable.findAll("div", attrs={'class': 'custom-title'}):
+            return item.text
+    if field_name == 'field--name-field-streamos-mp3-url' and gDJamtable is None:
+        gDJamtable = soup.find('div', attrs={'class': 'field--name-field-amazon-s3-mp3-url'})
         for item in gDJamtable.findAll("div", attrs={'class': 'custom-title'}):
             return item.text
     for item in gDJamtable.findAll("div", attrs={'class': 'field__item'}):

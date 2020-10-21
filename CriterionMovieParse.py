@@ -18,13 +18,13 @@ def extract_info(table):
 
 class MovieParse:
     def __init__(self, url):
-        url = url
+        self.url = url
         r = requests.get(url)
         soup = BeautifulSoup(r.content, 'html5lib')
         self.table = soup.find('div', attrs={'class': 'column small-16 medium-8 large-10'})
 
     def print_info(self, supplied_length=None):
-        diryrcnty, stars, descr, director, year = '', '', '', '', ''
+        diryrcnty, stars, descr, director, year, country = '', '', '', '', '', ''
         title, length = extract_title_length(self.table)
         info = extract_info(self.table)
         if len(info) == 4:
@@ -65,6 +65,7 @@ class MovieParse:
             title = title + " (" + year.strip() + ")"
 
         a = 42
+        print(self.url)
         if not supplied_length:
             if '•' in length:
                 length = length.split('•')[1].strip()
@@ -72,6 +73,8 @@ class MovieParse:
         print(title)
         if director:
             print(director)
+        if country:
+            print(country.strip())
         if stars:
             print(stars)
         if descr:
