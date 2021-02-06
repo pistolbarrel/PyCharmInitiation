@@ -11,8 +11,16 @@ def extract_description(soup):
         return row.text
 
 
+def extract_url(soup):
+    GDtable = soup.find('div', attrs={'class': 'node__content'})
+    for row in GDtable.findAll("div", attrs={'class': 'field--type-text-with-summary'}):
+        url_string = str(row.contents[2])
+        start = url_string.find("https:")
+        stop = url_string.find(".mp3") + 4
+        return url_string[start:stop]
+
 def extract_item(soup, field_name):
-    print(soup.prettify())
+#    print(soup.prettify())
     gDJamtable = soup.find('div', attrs={'class': field_name})
     if field_name == 'field--name-field-homepage-feature-title' and gDJamtable is None:
         gDJamtable = soup.find('div', attrs={'class': 'views-field views-field-nothing-3'})
@@ -83,7 +91,7 @@ def main():
     info['date_simple'] = date_to_ddmmyy(info['date'], '/')
     info['city'] = extract_item(soup, 'field--name-field-jam-location')
     info['venue'] = extract_item(soup, 'field--name-field-jam-venue')
-    info['url'] = extract_item(soup, 'field--name-field-streamos-mp3-url')
+    info['url'] = extract_url(soup)
     info['feat_date'] = extract_item(soup, 'field--name-field-homepage-feature-title')
     info['feat_date_simple'] = date_to_ddmmyyyy(date_range_to_start_date(info['feat_date']), '/')
     info['feat_date_complex'] = date_to_yyyyddmm(date_range_to_start_date(info['feat_date']), '-')
