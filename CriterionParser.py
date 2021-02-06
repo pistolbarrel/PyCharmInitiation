@@ -17,6 +17,7 @@ class CriterionParser:
     def extract_series_name_and_description(soup):
         match = 'Criterion Collection Edition '
         ret_str = ['NoName', 'NoAddition', 'NoDescription']
+        # print(soup.prettify())
         table = soup.find('div', attrs={'class': 'collection-details grid-padding-left'})
         if table:
             ret_str = []
@@ -27,7 +28,16 @@ class CriterionParser:
         return ret_str[0], ret_str[2]
 
     def url_type_helper(self, soup):
+        match = 'Leaving '
+        possible_leaving = []
+        for item in soup.stripped_strings:
+            possible_leaving.append(item)
+            break
+        if possible_leaving[0][:len(match)] == match:
+            possible_leaving[0] = possible_leaving[0].split(' - ')[0]
         series_name, description = self.extract_series_name_and_description(soup)
+        if series_name == 'NoName':
+            series_name = possible_leaving[0]
         return series_name, description
 
     @staticmethod
@@ -97,18 +107,18 @@ class CriterionParser:
                 ret_str = "https://www.criterionchannel.com" + item['href']
         return ret_str
 
-    def process(self):
+    def print_info(self):
         if self.url_type == 'movie':
             print('Examined ' + self.url)
-            self.parse_movies_list([['', self.url]])
+            self.print_movies_list([['', self.url]])
         elif self.url_type == 'collection':
             self.series_name, extracted_episode_info = self.get_collection_info()
             print('Examined ' + self.url)
-            self.parse_movies_list(extracted_episode_info)
+            self.print_movies_list(extracted_episode_info)
         elif self.url_type == 'edition':
             self.series_name, extracted_episode_info = self.get_edition_info()
             print('Examined ' + self.url)
-            self.parse_movies_list(extracted_episode_info)
+            self.print_movies_list(extracted_episode_info)
         else:
             self.series_name, description, extracted_episode_info = self.get_series_info()
             print('Examined ' + self.url)
@@ -118,12 +128,12 @@ class CriterionParser:
             print('+' * 54)
             print()
             print()
-            self.parse_movies_list(extracted_episode_info)
+            self.print_movies_list(extracted_episode_info)
 
-    def parse_movies_list(self, movies_list):
-        i = 0
+    def print_movies_list(self, movies_list):
+        episode = 0
         for movie in movies_list:
-            i += 1
+            episode += 1
             time, url = movie
             response = requests.get(url)
             soup = BeautifulSoup(response.content, 'html5lib')
@@ -135,7 +145,7 @@ class CriterionParser:
                 print('=' * 54)
             else:
                 print('+' * 54)
-                print(i)
+                print(episode)
                 print(time)
             if self.series_name:
                 print(self.series_name)
@@ -147,11 +157,52 @@ class CriterionParser:
             print()
             print()
 
+    def commit_to_database(self):
+        if self.url_type == 'movie':
+            print('Examined ' + self.url)
+            self.print_movies_list([['', self.url]])
+            self.add_to_database([['', self.url]])
+        elif self.url_type == 'collection':
+            self.series_name, extracted_episode_info = self.get_collection_info()
+            print('Examined ' + self.url)
+            self.print_movies_list(extracted_episode_info)
+            self.add_to_database(extracted_episode_info)
+        elif self.url_type == 'edition':
+            self.series_name, extracted_episode_info = self.get_edition_info()
+            print('Examined ' + self.url)
+            self.print_movies_list(extracted_episode_info)
+            self.add_to_database(extracted_episode_info)
+        else:
+            self.series_name, description, extracted_episode_info = self.get_series_info()
+            print('Examined ' + self.url)
+            print('+' * 54)
+            print(self.series_name)
+            print(description)
+            print('+' * 54)
+            print()
+            print()
+            self.print_movies_list(extracted_episode_info)
+            self.add_to_database(extracted_episode_info)
+
+    def add_to_database(self, movies_list):
+        episode = 0
+        for movie in movies_list:
+            episode += 1
+            time, url = movie
+            response = requests.get(url)
+            soup = BeautifulSoup(response.content, 'html5lib')
+            url_type = self.determine_url_type(soup)
+            if url_type == 'collection':
+                time, url = self.extract_collection_title_feature(soup)[0]
+            movie_parser = CriterionMovieParse.MovieParse(url)
+            movie_parser.addToDatabase(time, self.series_name, episode)
+
 
 def process_args():
     usage_desc = "This is how you use this thing"
     parser = argparse.ArgumentParser(description=usage_desc)
     parser.add_argument("url", help="URL to parse")
+    parser.add_argument("-d", "--database", help="Update movies database with information", action='store_true')
     args = parser.parse_args()
     return args
 
@@ -160,7 +211,10 @@ def main():
     args = process_args()
     if args.url:
         parser = CriterionParser(args.url)
-        parser.process()
+        if args.database:
+            parser.commit_to_database()
+        else:
+            parser.print_info()
 
 
 if __name__ == "__main__":

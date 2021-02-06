@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import argparse
+import MovieDatabase
+import CriterionMiniSeriesParse
 
 
 def extract_title_length(table):
@@ -22,8 +24,14 @@ class MovieParse:
         r = requests.get(url)
         soup = BeautifulSoup(r.content, 'html5lib')
         self.table = soup.find('div', attrs={'class': 'column small-16 medium-8 large-10'})
-
-    def print_info(self, supplied_length=None):
+        cmsp_length = None
+        if not self.table:
+            # desperate attempt to salvage the effort
+            cmsp = CriterionMiniSeriesParse.extract_series_title_feature(soup)
+            cmsp_length = cmsp[0][0]
+            r = requests.get(cmsp[0][1])
+            soup = BeautifulSoup(r.content, 'html5lib')
+            self.table = soup.find('div', attrs={'class': 'column small-16 medium-8 large-10'})
         diryrcnty, stars, descr, director, year, country = '', '', '', '', '', ''
         title, length = extract_title_length(self.table)
         info = extract_info(self.table)
@@ -61,25 +69,73 @@ class MovieParse:
         if len(info) == 1:
             descr = info[0]
 
+        if title[0:4] == "The ":
+            title = title[4:] + ", " + title[0:3]
+
+        if title[0:2] == "A ":
+            title = title[2:] + ", " + title[0:1]
+
         if year:
             title = title + " (" + year.strip() + ")"
 
-        a = 42
+        if '•' in length:
+            length = length.split('•')[1].strip()
+
+        if director:
+            director = director.replace(" and ", ",")
+            director = director.replace(",", ";")
+            director = director.replace(";;", ";")
+
+        self.length = length
+        if cmsp_length:
+            self.length = cmsp_length
+        self.title = title
+        self.director = director
+        self.country = country.strip()
+        self.stars = stars
+        self.descr = descr
+        self.year = year.strip()
+
+    def print_info(self, supplied_length=None):
+
         print(self.url)
         if not supplied_length:
-            if '•' in length:
-                length = length.split('•')[1].strip()
-            print(length)
-        print(title)
-        if director:
-            print(director)
-        if country:
-            print(country.strip())
-        if stars:
-            print(stars)
-        if descr:
+            print(self.length)
+        print(self.title)
+        if self.director:
+            print(self.director)
+        if self.country:
+            print(self.country)
+        if self.stars:
+            print(self.stars)
+        if self.descr:
             print()
-            print(descr)
+            print(self.descr)
+
+    def addToDatabase(self, supplied_length=None, collection=None, episode=None):
+        movie_db = MovieDatabase.MovieDatabase()
+        movie_length = self.length
+        if supplied_length:
+            movie_length = supplied_length
+
+        movie_id = movie_db.add_movie(self.title, movie_length, self.url, self.descr)
+
+        for director in self.director.split(';'):
+            if director:
+                director_id = movie_db.add_director(director.strip())
+                movie_db.insert_movie_director(movie_id, director_id)
+
+        for actor in self.stars.split(';'):
+            actor_id = movie_db.add_actor(actor.strip())
+            movie_db.insert_movie_actor(movie_id, actor_id)
+
+        for country in self.country.split(';'):
+            country_id = movie_db.add_country(country.strip())
+            movie_db.insert_movie_country(movie_id, country_id)
+
+        if collection and episode:
+            collection_id = movie_db.add_collection(collection.strip())
+            movie_db.insert_movie_collection(movie_id, collection_id, episode)
 
 
 def main():
