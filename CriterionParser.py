@@ -44,9 +44,13 @@ class CriterionParser:
     def extract_collection_title_feature(soup):
         ret = []
         table = soup.find('li', attrs={'class': 'js-collection-item'})
-        for item in table.findAll('div', attrs={'class': 'grid-item-padding'}):
-            movie = [item.a.text.strip(), item.a['href']]
-            ret.append(movie)
+        if table:
+            for item in table.findAll('div', attrs={'class': 'grid-item-padding'}):
+                movie = [item.a.text.strip(), item.a['href']]
+                ret.append(movie)
+        if len(ret) == 0:
+            empty = ['0:00', 'NoLinkToFeature']
+            ret.append(empty)
         return ret
 
     def extract_episode_time_and_url(self):
@@ -54,7 +58,7 @@ class CriterionParser:
         table = self.soup.find('ul', attrs={'class': 'js-load-more-items-container'})
         if table:
             for item in table.findAll('div', attrs={'class': 'grid-item-padding'}):
-                movie = [item.a.text.strip(), item.a['href']]
+                movie = [item.a.text.strip(), item.a['href'], item.img['alt']]
                 ret.append(movie)
         return ret
 
@@ -129,31 +133,59 @@ class CriterionParser:
             print()
             print()
             self.print_movies_list(extracted_episode_info)
+            print()
+            print()
+            for movie in extracted_episode_info:
+                title = movie[2]
+                str_end = ' \\([1,2]" *\n'
+                if title[:2] == "A ":
+                    title = title[2:]
+                    str_end = ', A \\([1,2]" *\n'
+                if title[:4] == "The ":
+                    title = title[4:]
+                    str_end = ', The \\([1,2]" *\n'
+                output_text = 'egrep "^' + title + str_end[:-1]
+                print(output_text)
+            print()
+            with open('tmpgrepper' + '.txt', 'w', encoding="UTF-8") as f:
+                for movie in extracted_episode_info:
+                    title = movie[2]
+                    str_end = ' \\([1,2]" *\n'
+                    if title[:2] == "A ":
+                        title = title[2:]
+                        str_end = ', A \\([1,2]" *\n'
+                    if title[:4] == "The ":
+                        title = title[4:]
+                        str_end = ', The \\([1,2]" *\n'
+                    output_text = 'egrep "^' + title + str_end
+                    f.write(output_text)
 
     def print_movies_list(self, movies_list):
         episode = 0
         for movie in movies_list:
             episode += 1
-            time, url = movie
+            time, url = movie[0], movie[1]
             response = requests.get(url)
             soup = BeautifulSoup(response.content, 'html5lib')
             url_type = self.determine_url_type(soup)
             if url_type == 'collection':
                 time, url = self.extract_collection_title_feature(soup)[0]
+                if time == '0:00':
+                    print('=' * 54)
+                    print('Skipping ' + str(episode) + ' : ' + movie[2])
+                    print('=' * 54)
+                    print()
+                    print()
+                    continue
             movie_parser = CriterionMovieParse.MovieParse(url)
-            if self.url_type == 'movie':
-                print('=' * 54)
-            else:
-                print('+' * 54)
+            print('=' * 54)
+            if self.url_type != 'movie':
                 print(episode)
                 print(time)
             if self.series_name:
                 print(self.series_name)
             movie_parser.print_info(time)
-            if self.url_type == 'movie':
-                print('=' * 54)
-            else:
-                print('+' * 54)
+            print('=' * 54)
             print()
             print()
 

@@ -5,24 +5,29 @@ from bs4 import BeautifulSoup
 import argparse
 import MovieDatabase
 
+
 def extract_title(table):
-    for item in table.findAll('h1', attrs={'class': 'css-75z8j3 eyplj683'}):
+    for item in table.findAll('h1', attrs={'class': 'css-75z8j3 eyplj6817'}):
         return item.text
+
 
 def extract_director(table):
     for item in table.findAll('span', attrs={'itemprop': 'name'}):
         return item.text
 
+
 def extract_country(table):
     ret = []
-    for item in table.findAll('div', attrs={'class': 'css-1f4y68f eyplj689'}):
+    for item in table.findAll('div', attrs={'class': 'css-jnjy65 eyplj6811'}):
         for str in item.stripped_strings:
             ret.append(str)
     return ret[0]
 
+
 def extract_year(table):
     for item in table.findAll('span', attrs={'itemprop': 'dateCreated'}):
         return item.text
+
 
 def extract_length(table):
     for item in table.findAll('time', attrs={'itemprop': 'duration'}):
@@ -30,7 +35,14 @@ def extract_length(table):
 
 
 def extract_info(table):
+    ret = []
     for item in table.findAll('div', attrs={'itemprop': 'description'}):
+        ret.append(item.text)
+    return ret
+
+
+def extract_take(table):
+    for item in table.findAll('div', attrs={'class': 'css-1mosuun eyplj6815'}):
         return item.text
 
 
@@ -60,23 +72,25 @@ class MubiMovieParse:
         r = requests.get(url)
         soup = BeautifulSoup(r.content, 'html5lib')
         print(soup.prettify())
-        self.table = soup.find('div', attrs={'class': 'css-ep7xq6 e1wsxkld12'})
+        self.table = soup.find('div', attrs={'class': 'css-iin0hz eyplj6814'})
         diryrcnty, stars, descr, director, year, country = '', '', '', '', '', ''
         title = extract_title(self.table)
         director = extract_director(self.table)
         country = extract_country(self.table)
         year = extract_year(self.table)
         length = extract_length(self.table)
-        descr = extract_info(self.table)
+        descr, take = extract_info(self.table)
 
         self.table = soup.find('div', attrs={'class': 'css-13wkbp7'})
         crew = extract_crew(self.table)
+        if title:
+            if title[0:4] == "The ":
+                title = title[4:] + ", " + title[0:3]
 
-        if title[0:4] == "The ":
-            title = title[4:] + ", " + title[0:3]
-
-        if title[0:2] == "A ":
-            title = title[2:] + ", " + title[0:1]
+            if title[0:2] == "A ":
+                title = title[2:] + ", " + title[0:1]
+        else:
+            title = ''
         title = title + ' (' + year + ')'
 
         length = datetime.timedelta(minutes=int(length))
@@ -93,6 +107,7 @@ class MubiMovieParse:
         self.country = country.strip()
         self.stars = stars
         self.descr = descr
+        self.take = take
         self.year = year.strip()
 
     def print_info(self, supplied_length=None):
@@ -110,6 +125,9 @@ class MubiMovieParse:
         if self.descr:
             print()
             print(self.descr)
+        if self.take:
+            print()
+            print(self.take)
 
     def addToDatabase(self, supplied_length=None, collection=None, episode=None):
         movie_db = MovieDatabase.MovieDatabase()

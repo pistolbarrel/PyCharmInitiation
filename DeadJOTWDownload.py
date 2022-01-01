@@ -20,7 +20,6 @@ def extract_url(soup):
         return url_string[start:stop]
 
 def extract_item(soup, field_name):
-#    print(soup.prettify())
     gDJamtable = soup.find('div', attrs={'class': field_name})
     if field_name == 'field--name-field-homepage-feature-title' and gDJamtable is None:
         gDJamtable = soup.find('div', attrs={'class': 'views-field views-field-nothing-3'})
@@ -85,6 +84,7 @@ def main():
     r = requests.get(url)
     soup = BeautifulSoup(r.content, 'html5lib')
 
+    # print(soup.prettify())
     info = {}
     info['desc'] = extract_description(soup)
     info['date'] = extract_item(soup, 'field--name-field-jam-date')

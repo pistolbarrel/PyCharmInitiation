@@ -36,7 +36,14 @@ class MovieParse:
         title, length = extract_title_length(self.table)
         info = extract_info(self.table)
         if len(info) == 4:
-            diryrcnty, stars, descr, ex_descr = info
+            # hack around episode names for some 'features'
+            if info[0].find('“') >= 0:
+                diryrcnty = info[1]
+                stars = info[2]
+                descr = info[3]
+                ex_descr = info[0]
+            else:
+                diryrcnty, stars, descr, ex_descr = info
             director, year, country = diryrcnty.split('•')
             director = director.replace("Directed by ", "")
             stars = stars.replace("Starring ", "")
@@ -102,6 +109,7 @@ class MovieParse:
         if not supplied_length:
             print(self.length)
         print(self.title)
+        print('##' + self.title + ' Watched')
         if self.director:
             print(self.director)
         if self.country:
