@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import argparse
 import MovieDatabase
 import CriterionMiniSeriesParse
+import json
 
 
 def extract_title_length(table):
@@ -36,8 +37,8 @@ class MovieParse:
         title, length = extract_title_length(self.table)
         info = extract_info(self.table)
         if len(info) == 4:
-            # hack around episode names for some 'features'
-            if info[0].find('“') >= 0:
+            # hack around episode names for some 'features' and sometimes alternate titles
+            if info[0].find('“') >= 0 or info[0].find('(') >= 0:
                 diryrcnty = info[1]
                 stars = info[2]
                 descr = info[3]
@@ -60,6 +61,8 @@ class MovieParse:
                 director = director.replace("Directed by ", "")
             stars = stars.replace("Starring ", "")
             stars = stars.replace(',', ';')
+            if country:
+                country = country.replace(',', ';')
 
         if len(info) == 2:
             diryrcnty, descr = info
@@ -81,7 +84,7 @@ class MovieParse:
 
         if title[0:2] == "A ":
             title = title[2:] + ", " + title[0:1]
-
+        self.just_title = title
         if year:
             title = title + " (" + year.strip() + ")"
 
@@ -92,6 +95,9 @@ class MovieParse:
             director = director.replace(" and ", ",")
             director = director.replace(",", ";")
             director = director.replace(";;", ";")
+
+        if country:
+            country = country.replace(',', ';')
 
         self.length = length
         if cmsp_length:
@@ -120,8 +126,28 @@ class MovieParse:
             print()
             print(self.descr)
 
+    def addViaApi(self, supplied_length=None, collection=None):
+        put_uri = "http://localhost:8080/rest/movie"
+        movie_dto = {"title": self.just_title,
+                     "year": self.year,
+                     "description": self.descr,
+                     "actors": self.stars,
+                     "directors": self.director,
+                     "countries": self.country,
+                     "collections": collection}
+        movie_length = self.length
+        if supplied_length:
+            movie_length = supplied_length
+        movie_dto["duration"] = movie_length
+
+        response = requests.put(put_uri, json=movie_dto)
+        if response.status_code != 200:
+            print("Error")
+
+
+
     def addToDatabase(self, supplied_length=None, collection=None, episode=None):
-        movie_db = MovieDatabase.MovieDatabase()
+        movie_db = MovieDatabase()
         movie_length = self.length
         if supplied_length:
             movie_length = supplied_length

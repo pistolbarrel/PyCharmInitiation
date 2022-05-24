@@ -229,12 +229,53 @@ class CriterionParser:
             movie_parser = CriterionMovieParse.MovieParse(url)
             movie_parser.addToDatabase(time, self.series_name, episode)
 
+    def collect_information_for_api(self):
+        if self.url_type == 'movie':
+            print('Examined ' + self.url)
+            # self.print_movies_list([['', self.url]])
+            self.call_api([['', self.url]])
+        elif self.url_type == 'collection':
+            self.series_name, extracted_episode_info = self.get_collection_info()
+            print('Examined ' + self.url)
+            # self.print_movies_list(extracted_episode_info)
+            self.call_api(extracted_episode_info)
+        elif self.url_type == 'edition':
+            self.series_name, extracted_episode_info = self.get_edition_info()
+            print('Examined ' + self.url)
+            # self.print_movies_list(extracted_episode_info)
+            self.call_api(extracted_episode_info)
+        else:
+            self.series_name, description, extracted_episode_info = self.get_series_info()
+            print('Examined ' + self.url)
+            print('+' * 54)
+            print(self.series_name)
+            print(description)
+            print('+' * 54)
+            print()
+            print()
+            # self.print_movies_list(extracted_episode_info)
+            self.call_api(extracted_episode_info)
+
+    def call_api(self, movies_list):
+        episode = 0
+        for movie in movies_list:
+            episode += 1
+            time, url, title = movie
+            response = requests.get(url)
+            soup = BeautifulSoup(response.content, 'html5lib')
+            url_type = self.determine_url_type(soup)
+            if url_type == 'collection':
+                time, url = self.extract_collection_title_feature(soup)[0]
+            movie_parser = CriterionMovieParse.MovieParse(url)
+            movie_parser.addViaApi(time, self.series_name)
+
 
 def process_args():
     usage_desc = "This is how you use this thing"
     parser = argparse.ArgumentParser(description=usage_desc)
     parser.add_argument("url", help="URL to parse")
     parser.add_argument("-d", "--database", help="Update movies database with information", action='store_true')
+    parser.add_argument("-a", "--api", help="Add movie via REST api", action='store_true')
     args = parser.parse_args()
     return args
 
@@ -243,8 +284,8 @@ def main():
     args = process_args()
     if args.url:
         parser = CriterionParser(args.url)
-        if args.database:
-            parser.commit_to_database()
+        if args.api:
+            parser.collect_information_for_api()
         else:
             parser.print_info()
 
