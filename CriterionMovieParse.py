@@ -87,6 +87,8 @@ class MovieParse:
         self.just_title = title
         if year:
             title = title + " (" + year.strip() + ")"
+        else:
+            title = title + " (NONE)"
 
         if '•' in length:
             length = length.split('•')[1].strip()
@@ -118,13 +120,23 @@ class MovieParse:
         print('##' + self.title + ' Watched')
         if self.director:
             print(self.director)
+        else:
+            print("NONE")
+
         if self.country:
             print(self.country)
+        else:
+            print("NONE")
+
         if self.stars:
             print(self.stars)
+        else:
+            print("NONE")
+        print()
         if self.descr:
-            print()
             print(self.descr)
+        else:
+            print("NONE")
 
     def addViaApi(self, supplied_length=None, collection=None):
         put_uri = "http://localhost:8080/rest/movie"
