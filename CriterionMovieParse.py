@@ -111,6 +111,9 @@ class MovieParse:
         self.descr = descr
         self.year = year.strip()
 
+    def get_parsed_info(self):
+        return [self.just_title, self.year, self.title, self.director, self.country, self.stars, self.descr]
+
     def print_info(self, supplied_length=None):
 
         print(self.url)

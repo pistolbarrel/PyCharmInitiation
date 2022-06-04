@@ -12,6 +12,7 @@ class CriterionParser:
         # print(self.soup.prettify())
         self.url_type = self.determine_url_type(self.soup)
         self.series_name = ''
+        self.all_movie_parsed_data = []
 
     @staticmethod
     def extract_series_name_and_description(soup):
@@ -147,18 +148,9 @@ class CriterionParser:
                 output_text = 'egrep "^' + title + str_end[:-1]
                 print(output_text)
             print()
-            with open('tmpgrepper' + '.txt', 'w', encoding="UTF-8") as f:
-                for movie in extracted_episode_info:
-                    title = movie[2]
-                    str_end = ' \\([1,2]" *\n'
-                    if title[:2] == "A ":
-                        title = title[2:]
-                        str_end = ', A \\([1,2]" *\n'
-                    if title[:4] == "The ":
-                        title = title[4:]
-                        str_end = ', The \\([1,2]" *\n'
-                    output_text = 'egrep "^' + title + str_end
-                    f.write(output_text)
+            print()
+            self.print_collection_update_info()
+
 
     def print_movies_list(self, movies_list):
         episode = 0
@@ -184,6 +176,7 @@ class CriterionParser:
                 print(time)
             if self.series_name:
                 print(self.series_name)
+            self.all_movie_parsed_data.append(movie_parser.get_parsed_info())
             movie_parser.print_info(time)
             print('=' * 54)
             print()
@@ -268,6 +261,14 @@ class CriterionParser:
                 time, url = self.extract_collection_title_feature(soup)[0]
             movie_parser = CriterionMovieParse.MovieParse(url)
             movie_parser.addViaApi(time, self.series_name)
+
+    def print_collection_update_info(self):
+        all_titles = ""
+        for movie_data in self.all_movie_parsed_data:
+            all_titles += movie_data[2] + "; "
+        print(all_titles)
+        print(self.series_name)
+
 
 
 def process_args():
